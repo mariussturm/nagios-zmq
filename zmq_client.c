@@ -7,7 +7,7 @@ int main (int argc, char *argv [])
     // Socket to talk to server
     printf ("Collecting updates from nagios server...\n");
     void *subscriber = zmq_socket (context, ZMQ_SUB);
-    zmq_connect (subscriber, "tcp://10.0.0.18:5555");
+    zmq_connect (subscriber, "tcp://127.0.0.1:5555");
 
     // Subscribe to SERVICECHECK
     char *filter = "SERVICECHECK ";
