@@ -6,7 +6,7 @@ on a zeromq message bus.
 
 ## Installation
 
-    sudo apt-get install libjson0-dev
+		sudo apt-get install libjson0-dev
 
 		install libzmq 2.1 from http://www.zeromq.org
 
