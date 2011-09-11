@@ -1,8 +1,22 @@
-Installation:
+# nagios-zmq
+
+`nagios-zmq` is a nagios event broker which provides nagios informations
+on a zeromq message bus.
+
+
+## Installation
 sudo apt-get install libjson0-dev
-sudo apt-get install libzmq-dev
+install libzmq 2.1 from http://www.zeromq.org
+
 gem install ffi
 gem install ffi-rzmq
-gcc -shared -lzmq -ljson -o neb2zmq.o neb2zmq.c
-cp neb2zmq.o /var/nagios3/...
+
+make
+make install
+
+set in your nagios.cfg
+broker_module=/var/lib/nagios3/nagios-zmq.o
+
+Outgonig messages are on port 6666 and incoming messages can send to port 5555.
+
 
