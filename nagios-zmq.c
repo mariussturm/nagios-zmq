@@ -123,22 +123,27 @@ json_object * json_add_pair(json_object *jobj, char *key, char *value) {
 	return jobj;
 }
 
+/* Generate an UUID string. */
+char * create_uuid() {
+	char *string = malloc(37);
+	uuid_t uuid;
+
+	uuid_generate(uuid);
+	uuid_unparse(uuid, string);
+
+	return string;
+}
+
 int send_servicecheck(nebstruct_service_check_data *check_data) {
 	time_t ts;
-	uuid_t uuid;
-	char uuid_string[37];
 	char message_buffer[MAX_MESSAGE];
 	char cast_buffer[1024];
 
 	ts = time(NULL);
 
-	/* Generate the uuid string. */
-	uuid_generate(uuid);
-	uuid_unparse(uuid, uuid_string);
-
 	json_object * jevent = json_object_new_object();
 
-	sprintf(cast_buffer, "%s",         uuid_string);
+	sprintf(cast_buffer, "%s",         create_uuid());
 	json_add_pair(jevent, "id",        cast_buffer);
 	json_add_pair(jevent, "context",   "SERVICECHECK");
 	json_add_pair(jevent, "source",    "NAGIOS");
