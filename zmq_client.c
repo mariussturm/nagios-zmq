@@ -5,14 +5,11 @@ int main (int argc, char *argv [])
     void *context = zmq_init (1);
 
     // Socket to talk to server
-    printf ("Collecting updates from nagios server...\n");
     void *subscriber = zmq_socket (context, ZMQ_SUB);
-    zmq_connect (subscriber, "tcp://127.0.0.1:5555");
+    zmq_connect (subscriber, "tcp://127.0.0.1:6666");
+    zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, "", 0);
 
-    // Subscribe to SERVICECHECK
-    char *filter = "SERVICECHECK ";
-    zmq_setsockopt (subscriber, ZMQ_SUBSCRIBE, filter, strlen (filter));
-
+    printf ("Collecting updates from nagios server...\n");
     while(1) {
         char *string = s_recv (subscriber);
         printf("message: %s\n", string);
@@ -23,4 +20,3 @@ int main (int argc, char *argv [])
     zmq_term (context);
     return 0;
 }
-
