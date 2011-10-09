@@ -135,11 +135,9 @@ char * create_uuid() {
 }
 
 int send_servicecheck(nebstruct_service_check_data *check_data) {
-	time_t ts;
+	time_t ts = time(NULL);
 	char message_buffer[MAX_MESSAGE];
 	char cast_buffer[1024];
-
-	ts = time(NULL);
 
 	json_object * jevent = json_object_new_object();
 
