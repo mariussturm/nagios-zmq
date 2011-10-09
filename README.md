@@ -1,8 +1,7 @@
 # nagios-zmq
 
-`nagios-zmq` is a nagios event broker which provides nagios informations
-on a zeromq message bus.
-
+`nagios-zmq` is a nagios event broker module that provides nagios information
+on a zeromq publish/subscribe socket.
 
 ## Installation
 
@@ -16,10 +15,9 @@ on a zeromq message bus.
 	./zmq_client
 
 
-set in your nagios.cfg
+Add the broker module to your `nagios.cfg`.
 
 	broker_module=/var/lib/nagios3/nagios-zmq.o
 
-Outgonig messages are on port 6666 and incoming messages can send to port 5555.
-
-
+* Subscribe to outgoing messages on port 6666.
+* Send incoming messages to port 5555.
