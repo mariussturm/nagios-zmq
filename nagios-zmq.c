@@ -224,7 +224,7 @@ void deregister_callbacks() {
 int nebmodule_init(int flags __attribute__ ((__unused__)), char *args, void *handle) {
   g_nagios_handle = handle;
 
-  logger(LG_INFO, "neb2zmq by Marius Sturm");
+  logger(LG_INFO, "nagios-zmq by Marius Sturm");
 
   parse_arguments(args);
   register_callbacks();
