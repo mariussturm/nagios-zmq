@@ -184,6 +184,55 @@ int send_servicecheck(nebstruct_service_check_data *check_data) {
 	return 0;
 }
 
+int send_hostcheck(nebstruct_host_check_data *check_data) {
+	time_t ts = time(NULL);
+	char message_buffer[MAX_MESSAGE];
+	char cast_buffer[1024];
+	char *uuid = create_uuid();
+
+	json_object * jevent = json_object_new_object();
+
+	sprintf(cast_buffer, "%s",         uuid);
+	json_add_pair(jevent, "id",        cast_buffer);
+	free(uuid);
+
+	json_add_pair(jevent, "context",   "HOSTCHECK");
+	json_add_pair(jevent, "source",    "NAGIOS");
+	sprintf(cast_buffer, "%i",         (int)ts);
+	json_add_pair(jevent, "timestamp", cast_buffer);
+
+	json_object * jobj = json_object_new_object();
+
+	sprintf(cast_buffer, "%i",             check_data->current_attempt);
+	json_add_pair(jobj, "current_attempt", cast_buffer);
+	sprintf(cast_buffer, "%i",             check_data->max_attempts);
+	json_add_pair(jobj, "max_attempts",    cast_buffer);
+	sprintf(cast_buffer, "%i",             check_data->state_type);
+	json_add_pair(jobj, "state_type",      cast_buffer);
+	sprintf(cast_buffer, "%i",             check_data->state);
+	json_add_pair(jobj, "state",           cast_buffer);
+	sprintf(cast_buffer, "%ld",            check_data->timestamp.tv_sec);
+	json_add_pair(jobj, "timestamp",       cast_buffer);
+	sprintf(cast_buffer, "%f",             check_data->execution_time);
+	json_add_pair(jobj, "execution_time",  cast_buffer);
+	json_add_pair(jobj, "hostname",        check_data->host_name);
+	json_add_pair(jobj, "output",          check_data->output);
+
+	if(check_data->perf_data)
+		json_add_pair(jobj, "performance", check_data->perf_data);
+
+	json_object_object_add(jevent, "payload", jobj);
+
+	logger(LG_INFO, "'%s'\n", json_object_to_json_string(jevent));
+	sprintf(message_buffer, "%s", json_object_to_json_string(jevent));
+
+	s_send(g_publisher, message_buffer);
+	json_object_put(jevent);
+	json_object_put(jobj);
+
+	return 0;
+}
+
 int broker_check(int event_type, void *data) {
 	if (event_type == NEBCALLBACK_SERVICE_CHECK_DATA) {
 		nebstruct_service_check_data *c = (nebstruct_service_check_data *)data;
@@ -194,7 +243,7 @@ int broker_check(int event_type, void *data) {
 	else if (event_type == NEBCALLBACK_HOST_CHECK_DATA) {
 		nebstruct_host_check_data *c = (nebstruct_host_check_data *)data;
 		if (c->type == NEBTYPE_HOSTCHECK_PROCESSED) {
-			// do stuff...
+			send_hostcheck(c);
 		}
 	}
 
@@ -217,6 +266,7 @@ int broker_process(int event_type __attribute__ ((__unused__)), void *data) {
 void register_callbacks() {
 	neb_register_callback(NEBCALLBACK_STATE_CHANGE_DATA,  g_nagios_handle, 0, broker_state);
 	neb_register_callback(NEBCALLBACK_SERVICE_CHECK_DATA, g_nagios_handle, 0, broker_check);
+	neb_register_callback(NEBCALLBACK_HOST_CHECK_DATA,    g_nagios_handle, 0, broker_check);
 	// used for starting threads
 	neb_register_callback(NEBCALLBACK_PROCESS_DATA,       g_nagios_handle, 0, broker_process);
 }
@@ -224,6 +274,7 @@ void register_callbacks() {
 void deregister_callbacks() {
 	neb_deregister_callback(NEBCALLBACK_STATE_CHANGE_DATA,  broker_state);
 	neb_deregister_callback(NEBCALLBACK_SERVICE_CHECK_DATA, broker_check);
+	neb_deregister_callback(NEBCALLBACK_HOST_CHECK_DATA,    broker_check);
 	neb_deregister_callback(NEBCALLBACK_PROCESS_DATA,       broker_process);
 }
 
