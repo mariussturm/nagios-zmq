@@ -4,6 +4,7 @@
 #include <time.h>
 #include <json/json.h>
 #include <pthread.h>
+#include <uuid/uuid.h>
 
 #include "include/zhelpers.h"
 
@@ -123,8 +124,26 @@ json_object * json_add_pair(json_object *jobj, char *key, char *value) {
 }
 
 int send_servicecheck(nebstruct_service_check_data *check_data) {
+  time_t ts;
+  uuid_t uuid;
+  char uuid_string[37];
   char message_buffer[MAX_MESSAGE];
 	char cast_buffer[1024];
+
+  ts = time(NULL);
+
+  /* Generate the uuid string. */
+  uuid_generate(uuid);
+  uuid_unparse(uuid, uuid_string);
+
+  json_object * jevent = json_object_new_object();
+
+  sprintf(cast_buffer, "%s",         uuid_string);
+  json_add_pair(jevent, "id",        cast_buffer);
+  json_add_pair(jevent, "context",   "SERVICECHECK");
+  json_add_pair(jevent, "source",    "NAGIOS");
+  sprintf(cast_buffer, "%i",         (int)ts);
+  json_add_pair(jevent, "timestamp", cast_buffer);
 
   json_object * jobj = json_object_new_object();
 
@@ -146,10 +165,13 @@ int send_servicecheck(nebstruct_service_check_data *check_data) {
   if(check_data->perf_data)
     json_add_pair(jobj, "performance", check_data->perf_data);
 
-	logger(LG_INFO, "'%s'\n", json_object_to_json_string(jobj));
-  sprintf(message_buffer, "SERVICECHECK %s", json_object_to_json_string(jobj));
+  json_object_object_add(jevent, "payload", jobj);
+
+	logger(LG_INFO, "'%s'\n", json_object_to_json_string(jevent));
+  sprintf(message_buffer, "%s", json_object_to_json_string(jevent));
 	
   s_send(g_publisher, message_buffer);
+  json_object_put(jevent);
   json_object_put(jobj);
 
   return 0;

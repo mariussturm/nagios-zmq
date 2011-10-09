@@ -1,7 +1,7 @@
 nagios-zmq.o: nagios-zmq.c
 
 .c.o:
-	gcc -shared -fPIC -lzmq -ljson -o $@ $<
+	gcc -shared -fPIC -lzmq -ljson -luuid -o $@ $<
 
 clean:
 	rm -f *.o
