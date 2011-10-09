@@ -86,21 +86,21 @@ void *zmq_forwarder_start() {
 	logger(LG_INFO, "start zmq forwarder.");
 
 	// Socket facing clients
-	void *incoming = zmq_socket (g_context, ZMQ_SUB);
-	zmq_bind (incoming, "tcp://*:5555");
+	void *incoming = zmq_socket(g_context, ZMQ_SUB);
+	zmq_bind(incoming, "tcp://*:5555");
 	zmq_setsockopt(incoming, ZMQ_SUBSCRIBE, "", 0);
 
 	// Socket facing services
-	void *outgoing = zmq_socket (g_context, ZMQ_PUB);
-	zmq_bind (outgoing, "tcp://*:6666");
+	void *outgoing = zmq_socket(g_context, ZMQ_PUB);
+	zmq_bind(outgoing, "tcp://*:6666");
 
 	// Start built-in device
-	zmq_device (ZMQ_FORWARDER, incoming, outgoing);
+	zmq_device(ZMQ_FORWARDER, incoming, outgoing);
 
 	// We never get here…
-	zmq_close (incoming);
-	zmq_close (outgoing);
-	zmq_term (g_context);
+	zmq_close(incoming);
+	zmq_close(outgoing);
+	zmq_term(g_context);
 }
 
 void start_threads() {
