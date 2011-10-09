@@ -10,11 +10,11 @@ on a zeromq message bus.
 
 	install libzmq 2.1 from http://www.zeromq.org
 
-	gem install ffi
-	gem install ffi-rzmq
-
 	make
 	make install
+	make client
+	./zmq_client
+
 
 set in your nagios.cfg
 
