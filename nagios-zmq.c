@@ -138,11 +138,14 @@ int send_servicecheck(nebstruct_service_check_data *check_data) {
 	time_t ts = time(NULL);
 	char message_buffer[MAX_MESSAGE];
 	char cast_buffer[1024];
+	char *uuid = create_uuid();
 
 	json_object * jevent = json_object_new_object();
 
-	sprintf(cast_buffer, "%s",         create_uuid());
+	sprintf(cast_buffer, "%s",         uuid);
 	json_add_pair(jevent, "id",        cast_buffer);
+	free(uuid);
+
 	json_add_pair(jevent, "context",   "SERVICECHECK");
 	json_add_pair(jevent, "source",    "NAGIOS");
 	sprintf(cast_buffer, "%i",         (int)ts);
