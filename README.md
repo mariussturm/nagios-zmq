@@ -5,10 +5,13 @@ on a zeromq publish/subscribe socket.
 
 ## Installation
 
+### Ubuntu/Debian based
 	sudo apt-get install libjson0-dev uuid-dev
-
 	install libzmq 2.1 from http://www.zeromq.org
+### Centos 
+	sudo yum install json-c-devel zeromq-devel libuuid-devel
 
+## Compilation
 	make
 	make install
 	make client
