@@ -36,6 +36,17 @@ pthread_t g_nagios_zmq_publisher_thread;
 
 NEB_API_VERSION(CURRENT_NEB_API_VERSION)
 
+/*
+  It's important to namespace functions and variables, otherwise they might conflict with other NEB's functions
+
+  Information about the different NEB structs can be found at:
+  -  http://nagios.svn.sourceforge.net/viewvc/nagios/nagioscore/trunk/include/nebstructs.h?&view=markup
+
+  The different callbacks can be found at:
+  - http://nagios.svn.sourceforge.net/viewvc/nagios/nagioscore/trunk/include/nebcallbacks.h?&view=markup
+
+ */
+
 void nagios_zmq_logger(int priority, const char *loginfo, ...)
 {
   char buffer[8192];
@@ -233,6 +244,60 @@ int nagios_zmq_send_hostcheck(nebstruct_host_check_data *check_data) {
   return 0;
 }
 
+int nagios_zmq_send_notification(nebstruct_notification_data *notification_data) {
+        time_t ts = time(NULL);
+        char message_buffer[MAX_MESSAGE];
+        char cast_buffer[1024];
+        char *uuid = nagios_zmq_create_uuid();
+
+        json_object * jevent = json_object_new_object();
+
+        sprintf(cast_buffer, "%s",         uuid);
+        json_add_pair(jevent, "id",        cast_buffer);
+        free(uuid);
+
+        json_add_pair(jevent, "context",   "NOTIFICATION");
+        json_add_pair(jevent, "source",    "NAGIOS");
+        sprintf(cast_buffer, "%i",         (int)ts);
+        json_add_pair(jevent, "timestamp", cast_buffer);
+
+        json_object * jobj = json_object_new_object();
+
+        json_add_pair(jobj, "hostname",        notification_data->host_name);
+        sprintf(cast_buffer, "%ld",            notification_data->start_time.tv_sec);
+        json_add_pair(jobj, "start_time",       cast_buffer);
+        sprintf(cast_buffer, "%ld",            notification_data->end_time.tv_sec);
+        json_add_pair(jobj, "end_time",       cast_buffer);
+        json_add_pair(jobj, "service_description",        notification_data->service_description);
+        sprintf(cast_buffer, "%i",             notification_data->reason_type);
+        json_add_pair(jobj, "reason_type",      cast_buffer);
+        sprintf(cast_buffer, "%i",             notification_data->state);
+        json_add_pair(jobj, "state",      cast_buffer);
+        json_add_pair(jobj, "output",        notification_data->output);
+
+        if (notification_data->ack_author != NULL) {
+          json_add_pair(jobj, "ack_author",        notification_data->ack_author);
+        }
+        if (notification_data->ack_data != NULL) {
+          json_add_pair(jobj, "ack_data",        notification_data->ack_data);
+        }
+        sprintf(cast_buffer, "%i",             notification_data->escalated);
+        json_add_pair(jobj, "escalated",      cast_buffer);
+        sprintf(cast_buffer, "%i",             notification_data->contacts_notified);
+        json_add_pair(jobj, "contacts_notified",      cast_buffer);
+
+        json_object_object_add(jevent, "payload", jobj);
+
+        nagios_zmq_logger(LG_INFO, "'%s'\n", json_object_to_json_string(jevent));
+        sprintf(message_buffer, "%s", json_object_to_json_string(jevent));
+
+        s_send(g_nagios_zmq_publisher, message_buffer);
+        json_object_put(jevent);
+        json_object_put(jobj);
+
+        return 0;
+}
+
 int nagios_zmq_broker_check(int event_type, void *data) {
   if (event_type == NEBCALLBACK_SERVICE_CHECK_DATA) {
     nebstruct_service_check_data *c = (nebstruct_service_check_data *)data;
@@ -248,6 +313,11 @@ int nagios_zmq_broker_check(int event_type, void *data) {
   }
 
   return 0;
+}
+
+int nagios_zmq_broker_notification(int event_type __attribute__ ((__unused__)), void *data) {
+  nebstruct_notification_data *n = (nebstruct_notification_data *)data;
+  nagios_zmq_send_notification(n);
 }
 
 int nagios_zmq_broker_state(int event_type __attribute__ ((__unused__)), void *data __attribute__ ((__unused__))) {
@@ -274,6 +344,7 @@ int nebmodule_init(int flags __attribute__ ((__unused__)), char *args, void *han
   neb_register_callback(NEBCALLBACK_STATE_CHANGE_DATA,  g_nagios_zmq_handle, 0, nagios_zmq_broker_state);
   neb_register_callback(NEBCALLBACK_SERVICE_CHECK_DATA, g_nagios_zmq_handle, 0, nagios_zmq_broker_check);
   neb_register_callback(NEBCALLBACK_HOST_CHECK_DATA,    g_nagios_zmq_handle, 0, nagios_zmq_broker_check);
+  neb_register_callback(NEBCALLBACK_NOTIFICATION_DATA,  g_nagios_zmq_handle, 0, nagios_zmq_broker_notification);
   // used for starting threads
   neb_register_callback(NEBCALLBACK_PROCESS_DATA,       g_nagios_zmq_handle, 0, nagios_zmq_broker_process);
 
@@ -286,6 +357,7 @@ int nebmodule_deinit(int flags __attribute__ ((__unused__)), int reason __attrib
   neb_deregister_callback(NEBCALLBACK_STATE_CHANGE_DATA,  nagios_zmq_broker_state);
   neb_deregister_callback(NEBCALLBACK_SERVICE_CHECK_DATA, nagios_zmq_broker_check);
   neb_deregister_callback(NEBCALLBACK_HOST_CHECK_DATA,    nagios_zmq_broker_check);
+  neb_deregister_callback(NEBCALLBACK_NOTIFICATION_DATA,  nagios_zmq_broker_notification);
   neb_deregister_callback(NEBCALLBACK_PROCESS_DATA,       nagios_zmq_broker_process);
 
   //deinit zmq
