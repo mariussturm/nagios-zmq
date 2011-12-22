@@ -51,9 +51,17 @@ The project provides a C-client listerer 'zmqclient'
     ./zmq_client
 
 ### Sample Ruby-client
+There are two sample provided:
+
+1) zmq_client.rb : uses the zmq gem
 
     $ gem instal json
     $ gem instal zmq
+
+2) zmq_client_ffi.rb : uses the ffi-rzmq gem (could be used for Jruby)
+
+    $ gem instal json
+    $ gem instal ffi-rzmq
 
     $ ruby zmq_client.rb
     Received service check:
