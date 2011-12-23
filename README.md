@@ -4,6 +4,8 @@
 
 This allows you to get the check/notification on a 0mq without polling nagios all the time.
 
+## Current status - proof-of-concept 
+
 ## Installation
 
 ### Ubuntu/Debian based
