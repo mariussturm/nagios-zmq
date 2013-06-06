@@ -1,10 +1,14 @@
+CC := gcc
+CFLAGS :=
+LDFLAGS :=
+
 nagios-zmq.o: nagios-zmq.c
 
 .c.o:
-	gcc -shared -fPIC -lzmq -ljson -luuid -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fPIC -lzmq -ljson -luuid -o $@ $<
 
 client:
-	gcc -I ./include -fPIC -lzmq -o zmq_client zmq_client.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -I ./include -fPIC -lzmq -o zmq_client zmq_client.c
 
 clean:
 	rm -f *.o zmq_client
